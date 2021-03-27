@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, session
 from flask_cors import cross_origin
 from sqlalchemy import desc
 from PIL import Image
@@ -9,8 +9,9 @@ from .cli import create_all, drop_all
 from .models import User, Item
 
 app = Flask(__name__)
-app.config[
-    "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
+# app.config[
+#     "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///home/jyjulianwong/ic-hello-world.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 database.init_app(app)
@@ -40,6 +41,61 @@ def save_image(image_path):
         img.save(f"images/{filename}", "PNG")
 
 
+@app.route('/signup', methods=["POST"])
+@cross_origin()
+def signup():
+    api_return = {"success": True}
+    json_data = request.form
+    try:
+        username = json_data["username"]
+        password = json_data["password"]
+
+        # adding the user object into the database
+        user_object = User(username=username, password=password)
+        database.session.add(user_object)
+        database.session.commit()
+
+        # signing the user into the current session
+        session['username'] = username
+    except Exception as e:
+        database.session.rollback()
+        api_return["success"] = False
+    finally:
+        database.session.close()
+        return api_return
+
+
+@app.route('/signin', methods=["POST"])
+@cross_origin()
+def signin():
+    api_return = {"success": True}
+    json_data = request.form
+    try:
+        username = json_data["username"]
+        password = json_data["password"]
+
+        # checking if the user object exists in the database
+        user_object = User.query.filter_by(username=username).first()
+
+        # signing the user into the current session
+        if user_object and password == user_object.password:
+            session['username'] = username
+        else:
+            raise Exception("Invalid sign-in detected.")
+    except Exception as e:
+        database.session.rollback()
+        api_return["success"] = False
+    finally:
+        database.session.close()
+        return api_return
+
+
+@app.route('/signout')
+@cross_origin()
+def signout():
+    session.clear()
+
+
 @app.route('/upload', methods=["POST"])
 @cross_origin()
 def upload():
@@ -63,6 +119,26 @@ def upload():
         api_return["success"] = False
     finally:
         database.session.close()
+        return api_return
+
+
+@app.route('/users', methods=["GET"])
+@cross_origin()
+def get_users():
+    api_return = {"success": True}
+    try:
+        list_of_users = User.query.order_by(desc(User.username)).all()[:]
+        list_of_users = list(map(lambda x: {
+            "id": x.id,
+            "username": x.username,
+            "password": x.password
+        }, list_of_users))
+
+        api_return["users"] = list_of_users
+    except Exception as e:
+        print(e)
+        api_return["success"] = False
+    finally:
         return api_return
 
 

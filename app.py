@@ -32,10 +32,11 @@ def home():
 def upload():
     api_return = {"success": True}
     json_data = request.get_json()
+    print(json_data)
     try:
         item_name = json_data["name"]
-        contact_email = json_data["contact_email"]
-        contact_number = json_data["contact_number"]
+        contact_email = json_data["contactEmail"]
+        contact_number = json_data["contactNumber"]
 
         # adding the item object into the database
         item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number)
@@ -50,6 +51,7 @@ def upload():
 
 
 @app.route('/items/<page_id>', methods=["GET"])
+@cross_origin()
 def get_items(page_id):
     api_return = {"success": True}
     page_id = int(page_id)
@@ -60,11 +62,13 @@ def get_items(page_id):
         list_of_items = Item.query.order_by(desc(Item.date)).filter(Item.found == 0).all()[
                         previous_page_items:current_page_items]
 
+        print(list_of_items)
         list_of_items = list(map(lambda x: {
             "id": x.id,
             "name": x.name,
-            "contact_email": x.contact_email,
-            "contact_number": x.contact_number
+            "contactEmail": x.contact_email,
+            "contactNumber": x.contact_number,
+            "date": x.date
         }, list_of_items))
 
         api_return["items"] = list_of_items

@@ -9,6 +9,7 @@ from .cli import create_all, drop_all
 from .models import User, Item
 
 app = Flask(__name__)
+app.secret_key = 'wherethe'
 # app.config[
 #     "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///home/jyjulianwong/ic-hello-world.db"
@@ -50,6 +51,10 @@ def signup():
         username = json_data["username"]
         password = json_data["password"]
 
+        # checking if the user object exists in the database
+        if User.query.filter_by(username=username).first():
+            raise Exception("User already exists in the database.")
+
         # adding the user object into the database
         user_object = User(username=username, password=password)
         database.session.add(user_object)
@@ -83,10 +88,8 @@ def signin():
         else:
             raise Exception("Invalid sign-in detected.")
     except Exception as e:
-        database.session.rollback()
         api_return["success"] = False
     finally:
-        database.session.close()
         return api_return
 
 
@@ -102,6 +105,10 @@ def upload():
     api_return = {"success": True}
     json_data = request.form
     try:
+        # a user needs to be signed in before they can upload
+        if session['username'] is None:
+            raise Exception("A user must be signed in before they can upload.")
+
         item_name = json_data["name"]
         contact_email = json_data["contactEmail"]
         contact_number = json_data["contactNumber"]
@@ -136,7 +143,6 @@ def get_users():
 
         api_return["users"] = list_of_users
     except Exception as e:
-        print(e)
         api_return["success"] = False
     finally:
         return api_return

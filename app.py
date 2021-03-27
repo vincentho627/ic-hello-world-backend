@@ -45,7 +45,10 @@ def save_image(image_path):
 @app.route('/signup', methods=["POST"])
 @cross_origin()
 def signup():
-    api_return = {"success": True}
+    api_return = {
+        "success": True,
+        "error": "An unknown error has occurred."
+    }
     json_data = request.form
     try:
         username = json_data["username"]
@@ -53,7 +56,8 @@ def signup():
 
         # checking if the user object exists in the database
         if User.query.filter_by(username=username).first():
-            raise Exception("User already exists in the database.")
+            api_return['error'] = "A user with that username already exists."
+            raise Exception()
 
         # adding the user object into the database
         user_object = User(username=username, password=password)
@@ -73,7 +77,10 @@ def signup():
 @app.route('/signin', methods=["POST"])
 @cross_origin()
 def signin():
-    api_return = {"success": True}
+    api_return = {
+        "success": True,
+        "error": "An unknown error has occurred."
+    }
     json_data = request.form
     try:
         username = json_data["username"]
@@ -86,7 +93,8 @@ def signin():
         if user_object and password == user_object.password:
             session['username'] = username
         else:
-            raise Exception("Invalid sign-in detected.")
+            api_return['error'] = "Invalid username or password detected."
+            raise Exception()
     except Exception as e:
         api_return["success"] = False
     finally:

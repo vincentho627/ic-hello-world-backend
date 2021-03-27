@@ -8,7 +8,8 @@ from .cli import create_all
 from .models import User, Item
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
+app.config[
+    "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 database.init_app(app)
@@ -20,7 +21,7 @@ with app.app_context():
 @app.route('/')
 def home():
     # database.session.add(
-    #     User(name="Vincent", email="vincentkcho627@gmail.com")
+    #     Item(name="Wallet", contact_email="vincentkcho627@gmail.com", contact_number="9382 8913")
     # )
     # database.session.commit()
     return "<h1>Success</h1>"
@@ -30,34 +31,42 @@ def home():
 @cross_origin()
 def upload():
     api_return = {"success": True}
-    session = Session()
-
+    json_data = request.get_json()
     try:
-        json_data = request.get_json()
         item_name = json_data["name"]
         contact_email = json_data["contact_email"]
         contact_number = json_data["contact_number"]
 
         # adding the item object into the database
         item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number)
-        item_object.add_to_session(session)
-        session.commit()
+        database.session.add(item_object)
+        database.session.commit()
     except Exception as e:
-        session.rollback()
+        database.session.rollback()
         api_return["success"] = False
     finally:
-        session.close()
+        database.session.close()
         return api_return
 
 
 @app.route('/items/<page_id>', methods=["GET"])
 def get_items(page_id):
     api_return = {"success": True}
+    page_id = int(page_id)
     previous_page_items = (page_id - 1) * 25
     current_page_items = previous_page_items + 25
 
     try:
-        list_of_items = Item.query.order_by(desc(Item.date)).filter()[previous_page_items:current_page_items].all()
+        list_of_items = Item.query.order_by(desc(Item.date)).filter(Item.found == 0).all()[
+                        previous_page_items:current_page_items]
+
+        list_of_items = list(map(lambda x: {
+            "id": x.id,
+            "name": x.name,
+            "contact_email": x.contact_email,
+            "contact_number": x.contact_number
+        }, list_of_items))
+
         api_return["items"] = list_of_items
     except Exception as e:
         api_return["success"] = False
@@ -65,18 +74,18 @@ def get_items(page_id):
         return api_return
 
 
-@app.route('/found/<item_id>', methods=["POST"])
+@app.route('/found/<item_id>', methods=["GET"])
 @cross_origin()
 def found_item(item_id):
     api_return = {"success": True}
-    session = Session()
 
     try:
-        session.query(Item).get(item_id).update({Item.found: True}, synchronize_session=False)
-        session.commit()
+        item = Item.query.get(item_id)
+        item.found = True
+        database.session.commit()
     except Exception as e:
-        session.rollback()
+        database.session.rollback()
         api_return["success"] = False
     finally:
-        session.close()
+        database.session.close()
         return api_return

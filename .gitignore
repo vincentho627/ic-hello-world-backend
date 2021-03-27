@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .idea/
 ic-hello-world.db
+images/
 
 # C extensions
 *.so

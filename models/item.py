@@ -13,7 +13,4 @@ class Item(db.Model):
     contact_number = db.Column(db.String(20), nullable=True)
     date = db.Column(db.Date, default=_get_date)
     found = db.Column(db.Boolean, default=False)
-    # TODO add photo
-
-    def add_to_session(self, session):
-        session.add(self)
+    image_path = db.Column(db.String(100), nullable=True)

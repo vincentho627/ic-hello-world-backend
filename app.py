@@ -1,10 +1,11 @@
 from flask import Flask, request
 from flask_cors import cross_origin
 from sqlalchemy import desc
-from sqlalchemy.orm import Session
+from PIL import Image
+import os
 
 from .database import database
-from .cli import create_all
+from .cli import create_all, drop_all
 from .models import User, Item
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ database.init_app(app)
 
 with app.app_context():
     app.cli.add_command(create_all)
+    app.cli.add_command(drop_all)
 
 
 @app.route('/')
@@ -27,19 +29,33 @@ def home():
     return "<h1>Success</h1>"
 
 
+def save_image(image_path):
+    if image_path:
+        img = Image.open(image_path)
+        if not os.path.exists("images"):
+            os.mkdir("images")
+        filename = image_path.filename
+        filename = filename.split(".")[0]
+        filename += ".png"
+        img.save(f"images/{filename}", "PNG")
+
+
 @app.route('/upload', methods=["POST"])
 @cross_origin()
 def upload():
     api_return = {"success": True}
-    json_data = request.get_json()
-    print(json_data)
+    json_data = request.form
     try:
         item_name = json_data["name"]
         contact_email = json_data["contactEmail"]
         contact_number = json_data["contactNumber"]
+        image_path = request.files.get('image')
+
+        save_image(image_path)
 
         # adding the item object into the database
-        item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number)
+        item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number,
+                           image_path=image_path.filename)
         database.session.add(item_object)
         database.session.commit()
     except Exception as e:

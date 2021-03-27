@@ -1,3 +1,4 @@
+PIL
 flask
 Flask-SQLAlchemy
 SQLAlchemy

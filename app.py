@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import cross_origin
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
@@ -26,6 +27,7 @@ def home():
 
 
 @app.route('/upload', methods=["POST"])
+@cross_origin()
 def upload():
     api_return = {"success": True}
     session = Session()
@@ -64,6 +66,7 @@ def get_items(page_id):
 
 
 @app.route('/found/<item_id>', methods=["POST"])
+@cross_origin()
 def found_item(item_id):
     api_return = {"success": True}
     session = Session()

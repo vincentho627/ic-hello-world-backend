@@ -1,9 +1,12 @@
+import base64
+
 from flask import Flask, request, session
 from flask_cors import cross_origin
 from sqlalchemy import desc
 from PIL import Image
 from flask_googlemaps import GoogleMaps
 import os
+import io
 
 from .database import database
 from .cli import create_all, drop_all
@@ -11,9 +14,9 @@ from .models import User, Item
 
 app = Flask(__name__)
 app.secret_key = 'wherethe'
-# app.config[
-#     "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///home/jyjulianwong/ic-hello-world.db"
+app.config[
+    "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///home/jyjulianwong/ic-hello-world.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['GOOGLEMAPS_KEY'] = "wherethe"
 
@@ -133,10 +136,13 @@ def upload():
         image_path = request.files.get('image')
 
         save_image(image_path)
+        filename = image_path.filename
+        filename = filename.split(".")[0]
+        filename += ".png"
 
         # adding the item object into the database
         item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number,
-                           last_seen_location=last_seen_location, image_path=image_path.filename)
+                           last_seen_location=last_seen_location, image_path=filename)
         database.session.add(item_object)
         database.session.commit()
     except Exception as e:
@@ -166,6 +172,22 @@ def get_users():
         return api_return
 
 
+def convert_to_json(x):
+    image = Image.open("images/" + x.image_path)
+    img_byte_arr = io.BytesIO()
+    image.save(img_byte_arr, format='PNG')
+    labelled_image = base64.encodebytes(img_byte_arr.getvalue()).decode('ascii')
+    return {
+        "id": x.id,
+        "name": x.name,
+        "contactEmail": x.contact_email,
+        "contactNumber": x.contact_number,
+        "date": x.date,
+        "image": labelled_image,
+        "lastSeenLocation": x.last_seen_location
+    }
+
+
 @app.route('/items/<page_id>', methods=["GET"])
 @cross_origin()
 def get_items(page_id):
@@ -178,16 +200,7 @@ def get_items(page_id):
         list_of_items = Item.query.order_by(desc(Item.date)).filter(Item.found == 0).all()[
                         previous_page_items:current_page_items]
 
-        print(list_of_items)
-        list_of_items = list(map(lambda x: {
-            "id": x.id,
-            "name": x.name,
-            "contactEmail": x.contact_email,
-            "contactNumber": x.contact_number,
-            "date": x.date,
-            "lastSeenLocation": x.last_seen_location
-        }, list_of_items))
-
+        list_of_items = list(map(lambda x: convert_to_json(x), list_of_items))
         api_return["items"] = list_of_items
     except Exception as e:
         api_return["success"] = False
@@ -205,14 +218,7 @@ def search_items(keywords):
         list_of_items = Item.query.order_by(desc(Item.date)).filter(
             any((keyword in Item.name) or (keyword in Item.last_seen_location) for keyword in keywords)).all()[:]
 
-        list_of_items = list(map(lambda x: {
-            "id": x.id,
-            "name": x.name,
-            "contactEmail": x.contact_email,
-            "contactNumber": x.contact_number,
-            "date": x.date,
-            "lastSeenLocation": x.last_seen_location
-        }, list_of_items))
+        list_of_items = list(map(lambda x: convert_to_json(x), list_of_items))
 
         api_return["items"] = list_of_items
     except Exception as e:

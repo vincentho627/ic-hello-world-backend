@@ -22,13 +22,18 @@ with app.app_context():
     app.cli.add_command(drop_all)
 
 
-@app.route('/')
+@app.route('/', methods=["GET"])
 def home():
     # database.session.add(
     #     Item(name="Wallet", contact_email="vincentkcho627@gmail.com", contact_number="9382 8913")
     # )
     # database.session.commit()
-    return "<h1>Success</h1>"
+    api_return = {"currUsername": "You're not signed in!"}
+
+    if 'username' in session:
+        api_return["currUsername"] = session['username']
+
+    return api_return
 
 
 def save_image(image_path):
@@ -114,8 +119,8 @@ def upload():
     json_data = request.form
     try:
         # a user needs to be signed in before they can upload
-        if session['username'] is None:
-            raise Exception("A user must be signed in before they can upload.")
+        # if session['username'] is None:
+        #     raise Exception("A user must be signed in before they can upload.")
 
         item_name = json_data["name"]
         contact_email = json_data["contactEmail"]

@@ -16,3 +16,5 @@ class Item(db.Model):
     image_path = db.Column(db.String(100), nullable=True)
     found = db.Column(db.Boolean, default=False)
     details = db.Column(db.String(), nullable=False)
+    lost_or_found = db.Column(db.Boolean, nullable=False)        # lost = True, found = False
+

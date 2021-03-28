@@ -1,4 +1,5 @@
-PIL
+python-dotenv
+Pillow
 flask
 Flask-SQLAlchemy
 SQLAlchemy

@@ -29,6 +29,7 @@ with app.app_context():
 
 
 @app.route('/', methods=["GET"])
+@cross_origin()
 def home():
     # database.session.add(
     #     Item(name="Wallet", contact_email="vincentkcho627@gmail.com", contact_number="9382 8913")

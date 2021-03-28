@@ -6,11 +6,22 @@ WhereThe is our team's submission to the IC Hello World 2021 hackaathon at Imper
 
 ## Running the back-end of WhereThe
 
+### Installing dependencies
+
 After cloning this repository, install all the required dependencies, such as Flask and SQLite3, with the following command at the root directory: 
 ```
 pip install -r requirements.txt
 ```
-Create SQL databases. 
+
+### Creating a local SQLite3 database
+
+Then, pick a directory of your choice and run the following commands to create a local SQLite3 database on your device: 
+```
+sqlite3 ic-hello-world.db
+```
+Config file. 
+
+### Running the Flask back-end
 
 Now initialise the local databases in Flask with the following commands, and start up the back-end server: 
 ```
@@ -18,3 +29,7 @@ flask drop_all
 flask create_all
 flask run
 ```
+
+# Running the front-end of WhereThe
+
+After completing the steps above, see the [GitHub repository of the front-end of WhereThe](https://github.com/vincentho627/ic-hello-world-frontend) and follow the instructions listed there. You will then have the complete platform set up and ready to test on your local device. 

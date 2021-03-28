@@ -12,5 +12,6 @@ class Item(db.Model):
     contact_email = db.Column(db.String(120), nullable=True)
     contact_number = db.Column(db.String(20), nullable=True)
     date = db.Column(db.Date, default=_get_date)
-    found = db.Column(db.Boolean, default=False)
+    last_seen_location = db.Column(db.String(120), nullable=True)
     image_path = db.Column(db.String(100), nullable=True)
+    found = db.Column(db.Boolean, default=False)

@@ -132,16 +132,20 @@ def upload():
         contact_email = json_data["contactEmail"]
         contact_number = json_data["contactNumber"]
         last_seen_location = json_data["lastSeenLocation"]
+        details = json_data["details"]
+        print(details)
         image_path = request.files.get('image')
+        print(image_path)
 
         save_image(image_path)
         filename = image_path.filename
         filename = filename.split(".")[0]
         filename += ".png"
+        print(filename)
 
         # adding the item object into the database
         item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number,
-                           last_seen_location=last_seen_location, image_path=filename)
+                           last_seen_location=last_seen_location, image_path=filename, details=details)
         database.session.add(item_object)
         database.session.commit()
     except Exception as e:
@@ -172,7 +176,10 @@ def get_users():
 
 
 def convert_to_json(x):
-    image = Image.open("images/" + x.image_path)
+    if x.image_path:
+        image = Image.open("images/" + x.image_path)
+    else:
+        image = Image.open("no_image.png")
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format='PNG')
     labelled_image = base64.encodebytes(img_byte_arr.getvalue()).decode('ascii')
@@ -183,7 +190,8 @@ def convert_to_json(x):
         "contactNumber": x.contact_number,
         "date": x.date,
         "image": labelled_image,
-        "lastSeenLocation": x.last_seen_location
+        "lastSeenLocation": x.last_seen_location,
+        "details": x.details,
     }
 
 
@@ -211,18 +219,24 @@ def get_items(page_id):
 @cross_origin()
 def search_items(keywords):
     api_return = {"success": True}
+    print(keywords)
+    keywords = keywords.split("+")
+    if keywords:
+        try:
+            list_of_items = []
+            for keyword in keywords:
+                items = Item.query.order_by(desc(Item.date)).filter(Item.name.contains(keyword)).all()[:25]
+                list_of_items += items
 
-    try:
-        keywords = keywords.replace("+", " ")
-        list_of_items = Item.query.order_by(desc(Item.date)).filter(
-            any((keyword in Item.name) or (keyword in Item.last_seen_location) for keyword in keywords)).all()[:]
+            list_of_items = list(map(lambda x: convert_to_json(x), list_of_items))
 
-        list_of_items = list(map(lambda x: convert_to_json(x), list_of_items))
-
-        api_return["items"] = list_of_items
-    except Exception as e:
+            api_return["items"] = list_of_items
+        except Exception as e:
+            api_return["success"] = False
+        finally:
+            return api_return
+    else:
         api_return["success"] = False
-    finally:
         return api_return
 
 

@@ -187,6 +187,9 @@ def convert_to_json(x):
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format='PNG')
     labelled_image = base64.encodebytes(img_byte_arr.getvalue()).decode('ascii')
+    lost_or_found = "found"
+    if x.lost_or_found:
+        lost_or_found = "lost"
     return {
         "id": x.id,
         "name": x.name,
@@ -196,12 +199,13 @@ def convert_to_json(x):
         "image": labelled_image,
         "lastSeenLocation": x.last_seen_location,
         "details": x.details,
+        "lostOrFound": lost_or_found,
     }
 
 
 @app.route('/lost-items/<page_id>', methods=["GET"])
 @cross_origin()
-def get_items(page_id):
+def get_lost_items(page_id):
     api_return = {"success": True}
     page_id = int(page_id)
     previous_page_items = (page_id - 1) * 25
@@ -209,6 +213,26 @@ def get_items(page_id):
 
     try:
         list_of_items = Item.query.filter(Item.found == 0, Item.lost_or_found == 1).order_by(desc(Item.date)).all()[
+                        previous_page_items:current_page_items]
+
+        list_of_items = list(map(lambda x: convert_to_json(x), list_of_items))
+        api_return["items"] = list_of_items
+    except Exception as e:
+        api_return["success"] = False
+    finally:
+        return api_return
+
+
+@app.route('/found-items/<page_id>', methods=["GET"])
+@cross_origin()
+def get_found_items(page_id):
+    api_return = {"success": True}
+    page_id = int(page_id)
+    previous_page_items = (page_id - 1) * 25
+    current_page_items = previous_page_items + 25
+
+    try:
+        list_of_items = Item.query.filter(Item.found == 0, Item.lost_or_found == 0).order_by(desc(Item.date)).all()[
                         previous_page_items:current_page_items]
 
         list_of_items = list(map(lambda x: convert_to_json(x), list_of_items))

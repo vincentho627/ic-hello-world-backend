@@ -11,7 +11,7 @@ import io
 from .database import database
 from .cli import create_all, drop_all
 from .models import User, Item
-from config import SQL_DATABASE_URI
+from .config import SQL_DATABASE_URI
 
 app = Flask(__name__)
 app.secret_key = 'wherethe'

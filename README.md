@@ -19,7 +19,16 @@ Then, pick a directory of your choice and run the following commands to create a
 ```
 sqlite3 ic-hello-world.db
 ```
-Config file. 
+Now go into the `config.py` file in the root directory of the repository and edit the `SQL_DATABASE_URI` field to tell Flask where the database you just created is, for example: 
+```
+# Unix / Mac (Note the four leading slashes)
+SQL_DATABASE_URI = sqlite:////absolute/path/to/ic-hello-world.db
+# Windows (Note three leading forward slashes and backslash escapes)
+SQL_DATABASE_URI = sqlite:///C:\absolute\path\to\ic-hello-world.db
+# Windows (Alternative using raw string)
+SQL_DATABASE_URI = r'sqlite:///C:\absolute\path\to\ic-hello-world.db'
+
+```
 
 ### Running the Flask back-end
 

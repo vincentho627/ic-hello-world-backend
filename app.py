@@ -2,6 +2,7 @@ from flask import Flask, request, session
 from flask_cors import cross_origin
 from sqlalchemy import desc
 from PIL import Image
+from flask_googlemaps import GoogleMaps
 import os
 
 from .database import database
@@ -14,8 +15,10 @@ app.secret_key = 'wherethe'
 #     "SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///home/jyjulianwong/ic-hello-world.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config['GOOGLEMAPS_KEY'] = "wherethe"
 
 database.init_app(app)
+GoogleMaps(app)
 
 with app.app_context():
     app.cli.add_command(create_all)
@@ -125,13 +128,14 @@ def upload():
         item_name = json_data["name"]
         contact_email = json_data["contactEmail"]
         contact_number = json_data["contactNumber"]
+        last_seen_location = json_data["lastSeenLocation"]
         image_path = request.files.get('image')
 
         save_image(image_path)
 
         # adding the item object into the database
         item_object = Item(name=item_name, contact_email=contact_email, contact_number=contact_number,
-                           image_path=image_path.filename)
+                           last_seen_location=last_seen_location, image_path=image_path.filename)
         database.session.add(item_object)
         database.session.commit()
     except Exception as e:
@@ -179,7 +183,34 @@ def get_items(page_id):
             "name": x.name,
             "contactEmail": x.contact_email,
             "contactNumber": x.contact_number,
-            "date": x.date
+            "date": x.date,
+            "lastSeenLocation": x.last_seen_location
+        }, list_of_items))
+
+        api_return["items"] = list_of_items
+    except Exception as e:
+        api_return["success"] = False
+    finally:
+        return api_return
+
+
+@app.route('/search/<keywords>', methods=["GET"])
+@cross_origin()
+def search_items(keywords):
+    api_return = {"success": True}
+
+    try:
+        keywords = keywords.replace("+", " ")
+        list_of_items = Item.query.order_by(desc(Item.date)).filter(
+            any((keyword in Item.name) or (keyword in Item.last_seen_location) for keyword in keywords)).all()[:]
+
+        list_of_items = list(map(lambda x: {
+            "id": x.id,
+            "name": x.name,
+            "contactEmail": x.contact_email,
+            "contactNumber": x.contact_number,
+            "date": x.date,
+            "lastSeenLocation": x.last_seen_location
         }, list_of_items))
 
         api_return["items"] = list_of_items

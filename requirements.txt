@@ -4,3 +4,4 @@ flask
 Flask-SQLAlchemy
 SQLAlchemy
 flask_cors
+flask_googlemaps

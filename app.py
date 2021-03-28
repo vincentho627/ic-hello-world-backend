@@ -11,12 +11,11 @@ import io
 from .database import database
 from .cli import create_all, drop_all
 from .models import User, Item
+from config import SQL_DATABASE_URI
 
 app = Flask(__name__)
 app.secret_key = 'wherethe'
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///Users/vho001/Desktop/ic-hello-world/ic-hello-world-backend/ic-hello-world.db"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://///home/jyjulianwong/ic-hello-world.db"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///C:/Users/Kiky/ic-hello-world-backend/ic-hello-world.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = SQL_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['GOOGLEMAPS_KEY'] = "wherethe"
 
